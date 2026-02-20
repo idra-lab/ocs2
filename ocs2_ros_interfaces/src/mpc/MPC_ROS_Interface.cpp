@@ -37,6 +37,17 @@ const rclcpp::Logger LOGGER = rclcpp::get_logger("MPC_ROS_Interface");
 
 namespace ocs2 {
 
+namespace {
+template <typename T>
+diagnostic_msgs::msg::KeyValue makeKeyValue(const std::string& key,
+                                            const T value) {
+  diagnostic_msgs::msg::KeyValue kv;
+  kv.key = key;
+  kv.value = std::to_string(value);
+  return kv;
+}
+}  // namespace
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -254,6 +265,70 @@ void MPC_ROS_Interface::copyToBuffer(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+void MPC_ROS_Interface::publishSolverDiagnostics(
+    const SystemObservation& mpcInitObservation) {
+  diagnostic_msgs::msg::DiagnosticArray diagnosticsMsg;
+  diagnosticsMsg.header.stamp = node_->now();
+
+  diagnostic_msgs::msg::DiagnosticStatus statusMsg;
+  statusMsg.name = topicPrefix_ + "/mpc_solver";
+  statusMsg.hardware_id = topicPrefix_;
+  statusMsg.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  statusMsg.message = "ok";
+
+  auto* const solverPtr = mpc_.getSolverPtr();
+  const auto& performanceIndices = solverPtr->getPerformanceIndeces();
+  scalar_t timeWindow = mpc_.settings().solutionTimeWindow_;
+  if (mpc_.settings().solutionTimeWindow_ < 0) {
+    timeWindow = solverPtr->getFinalTime() - mpcInitObservation.time;
+  }
+
+  if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) {
+    statusMsg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+    statusMsg.message = "short_solution_window";
+  }
+
+  statusMsg.values.reserve(16);
+  statusMsg.values.emplace_back(
+      makeKeyValue("solve_time_last_ms", mpcTimer_.getLastIntervalInMilliseconds()));
+  statusMsg.values.emplace_back(
+      makeKeyValue("solve_time_avg_ms", mpcTimer_.getAverageInMilliseconds()));
+  statusMsg.values.emplace_back(
+      makeKeyValue("solve_time_max_ms", mpcTimer_.getMaxIntervalInMilliseconds()));
+  statusMsg.values.emplace_back(
+      makeKeyValue("solve_time_samples", mpcTimer_.getNumTimedIntervals()));
+  statusMsg.values.emplace_back(
+      makeKeyValue("obs_time_sec", mpcInitObservation.time));
+  statusMsg.values.emplace_back(
+      makeKeyValue("solution_time_window_sec", timeWindow));
+  statusMsg.values.emplace_back(
+      makeKeyValue("solver_final_time_sec", solverPtr->getFinalTime()));
+  statusMsg.values.emplace_back(
+      makeKeyValue("ddp_iterations_used", solverPtr->getNumIterations()));
+  statusMsg.values.emplace_back(
+      makeKeyValue("perf_merit", performanceIndices.merit));
+  statusMsg.values.emplace_back(
+      makeKeyValue("perf_cost", performanceIndices.cost));
+  statusMsg.values.emplace_back(
+      makeKeyValue("perf_dual_feas_sse", performanceIndices.dualFeasibilitiesSSE));
+  statusMsg.values.emplace_back(
+      makeKeyValue("perf_dynamics_violation_sse", performanceIndices.dynamicsViolationSSE));
+  statusMsg.values.emplace_back(
+      makeKeyValue("perf_eq_constraints_sse", performanceIndices.equalityConstraintsSSE));
+  statusMsg.values.emplace_back(
+      makeKeyValue("perf_ineq_constraints_sse", performanceIndices.inequalityConstraintsSSE));
+  statusMsg.values.emplace_back(
+      makeKeyValue("perf_eq_lagrangian", performanceIndices.equalityLagrangian));
+  statusMsg.values.emplace_back(
+      makeKeyValue("perf_ineq_lagrangian", performanceIndices.inequalityLagrangian));
+
+  diagnosticsMsg.status.emplace_back(std::move(statusMsg));
+  mpcSolverDiagnosticsPublisher_->publish(diagnosticsMsg);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void MPC_ROS_Interface::mpcObservationCallback(
     const ocs2_msgs::msg::MpcObservation::ConstSharedPtr& msg) {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
@@ -304,6 +379,8 @@ void MPC_ROS_Interface::mpcObservationCallback(
               << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]."
               << std::endl;
   }
+
+  publishSolverDiagnostics(currentObservation);
 
 #ifdef PUBLISH_THREAD
   std::unique_lock<std::mutex> lk(publisherMutex_);
@@ -376,6 +453,10 @@ void MPC_ROS_Interface::launchNodes(const rclcpp::Node::SharedPtr& node) {
   mpcPolicyPublisher_ =
       node_->create_publisher<ocs2_msgs::msg::MpcFlattenedController>(
           topicPrefix_ + "_mpc_policy", latchedQos);
+  mpcSolverDiagnosticsPublisher_ =
+      node_->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
+          topicPrefix_ + "_mpc_solver_diagnostics",
+          rclcpp::QoS(rclcpp::KeepLast(10)).reliable());
 
   // MPC reset service server
   mpcResetServiceServer_ = node_->create_service<ocs2_msgs::srv::Reset>(

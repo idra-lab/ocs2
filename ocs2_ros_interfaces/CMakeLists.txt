@@ -9,6 +9,7 @@ find_package(rclcpp REQUIRED)
 find_package(ocs2_msgs REQUIRED)
 find_package(ocs2_core REQUIRED)
 find_package(ocs2_mpc REQUIRED)
+find_package(diagnostic_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -42,6 +43,7 @@ ament_target_dependencies(${PROJECT_NAME}
   ocs2_msgs
   ocs2_core
   ocs2_mpc
+  diagnostic_msgs
   std_msgs
   visualization_msgs
   geometry_msgs
@@ -94,6 +96,7 @@ ament_export_dependencies(
   ocs2_msgs
   ocs2_core
   ocs2_mpc
+  diagnostic_msgs
   std_msgs
   visualization_msgs
   geometry_msgs

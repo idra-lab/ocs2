@@ -47,6 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_msgs/msg/mpc_observation.hpp>
 #include <ocs2_msgs/msg/mpc_target_trajectories.hpp>
 #include <ocs2_msgs/srv/reset.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <string>
 #include <thread>
 #include <vector>
@@ -146,6 +147,13 @@ class MPC_ROS_Interface {
   void mpcObservationCallback(
       const ocs2_msgs::msg::MpcObservation::ConstSharedPtr& msg);
 
+  /**
+   * Publish one diagnostics sample with solver timing and convergence data.
+   *
+   * @param [in] mpcInitObservation: Observation used for the current solve.
+   */
+  void publishSolverDiagnostics(const SystemObservation& mpcInitObservation);
+
  protected:
   /*
    * Variables
@@ -163,6 +171,8 @@ class MPC_ROS_Interface {
       mpcTargetTrajectoriesSubscriber_;
   rclcpp::Publisher<ocs2_msgs::msg::MpcFlattenedController>::SharedPtr
       mpcPolicyPublisher_;
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
+      mpcSolverDiagnosticsPublisher_;
   rclcpp::Service<ocs2_msgs::srv::Reset>::SharedPtr mpcResetServiceServer_;
 
   std::unique_ptr<CommandData> bufferCommandPtr_;

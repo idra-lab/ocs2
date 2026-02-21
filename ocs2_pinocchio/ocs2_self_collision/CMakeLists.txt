@@ -10,10 +10,30 @@ find_package(ocs2_robotic_tools REQUIRED)
 find_package(ocs2_pinocchio_interface REQUIRED)
 find_package(pinocchio REQUIRED)
 find_package(hpp-fcl REQUIRED)
-find_package(coal REQUIRED)
+find_package(coal QUIET)
 find_package(tinyxml2 REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(Boost REQUIRED COMPONENTS system filesystem log_setup log)
+
+set(SELF_COLLISION_FCL_LINK_TARGETS hpp-fcl::hpp-fcl)
+if(TARGET coal::coal)
+  list(APPEND SELF_COLLISION_FCL_LINK_TARGETS coal::coal)
+endif()
+list(REMOVE_DUPLICATES SELF_COLLISION_FCL_LINK_TARGETS)
+
+set(SELF_COLLISION_EXPORT_DEPS
+  ocs2_core
+  ocs2_robotic_tools
+  ocs2_pinocchio_interface
+  pinocchio
+  hpp-fcl
+  tinyxml2
+  Eigen3
+  Boost
+)
+if(coal_FOUND)
+  list(APPEND SELF_COLLISION_EXPORT_DEPS coal)
+endif()
 
 set(FLAGS
   ${OCS2_CXX_FLAGS}
@@ -34,8 +54,7 @@ add_library(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   PUBLIC
     pinocchio::pinocchio
-    hpp-fcl::hpp-fcl
-    coal::coal
+    ${SELF_COLLISION_FCL_LINK_TARGETS}
     tinyxml2::tinyxml2
 )
 target_include_directories(${PROJECT_NAME}
@@ -81,15 +100,7 @@ ament_export_include_directories(
 )
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(
-  ocs2_core
-  ocs2_robotic_tools
-  ocs2_pinocchio_interface
-  pinocchio
-  hpp-fcl
-  coal
-  tinyxml2
-  Eigen3
-  Boost
+  ${SELF_COLLISION_EXPORT_DEPS}
 )
 
 ament_package()

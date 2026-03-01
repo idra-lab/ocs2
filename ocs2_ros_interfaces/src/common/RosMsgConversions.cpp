@@ -230,9 +230,9 @@ TargetTrajectories readTargetTrajectoriesMsg(
   vector_array_t desiredStateTrajectory(N);
   for (size_t i = 0; i < N; i++) {
     desiredTimeTrajectory[i] = targetTrajectoriesMsg.time_trajectory[i];
-    if (i > 0 && !(desiredTimeTrajectory[i - 1] < desiredTimeTrajectory[i])) {
+    if (i > 0 && desiredTimeTrajectory[i] < desiredTimeTrajectory[i - 1]) {
       throw std::runtime_error(
-          "Target trajectories message has non-increasing time trajectory.");
+          "Target trajectories message has decreasing time trajectory.");
     }
 
     desiredStateTrajectory[i] =

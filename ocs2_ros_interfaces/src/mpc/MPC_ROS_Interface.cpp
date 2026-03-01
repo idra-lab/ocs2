@@ -39,13 +39,10 @@ const rclcpp::Logger LOGGER = rclcpp::get_logger("MPC_ROS_Interface");
 namespace ocs2 {
 namespace {
 
-size_t inferDimFromTrajectory(const vector_array_t& trajectory) {
-  for (const auto& sample : trajectory) {
-    if (sample.size() > 0) {
-      return sample.size();
-    }
-  }
-  return 0;
+size_t inferDimFromTrajectory(const vector_array_t& trajectory,
+                              bool& hasSamples) {
+  hasSamples = !trajectory.empty();
+  return hasSamples ? trajectory.front().size() : 0;
 }
 
 [[noreturn]] void throwTargetTrajectoriesError(const std::string& message) {
@@ -70,10 +67,10 @@ void validateResetTargetTrajectories(
   }
 
   for (size_t i = 1; i < N; i++) {
-    if (!(targetTrajectories.timeTrajectory[i - 1] <
-          targetTrajectories.timeTrajectory[i])) {
+    if (targetTrajectories.timeTrajectory[i] <
+        targetTrajectories.timeTrajectory[i - 1]) {
       std::ostringstream stream;
-      stream << "timeTrajectory must be strictly increasing, but t[" << i - 1
+      stream << "timeTrajectory must be non-decreasing, but t[" << i - 1
              << "]=" << targetTrajectories.timeTrajectory[i - 1] << " and t["
              << i << "]=" << targetTrajectories.timeTrajectory[i] << ".";
       throwTargetTrajectoriesError(stream.str());
@@ -105,27 +102,44 @@ void validateResetTargetTrajectories(
     }
   }
 
-  const auto expectedStateDim = inferDimFromTrajectory(referenceTrajectories.stateTrajectory);
-  if (expectedStateDim > 0 && stateDim != expectedStateDim) {
+  bool hasReferenceState = false;
+  const auto expectedStateDim =
+      inferDimFromTrajectory(referenceTrajectories.stateTrajectory,
+                            hasReferenceState);
+  if (hasReferenceState && stateDim != expectedStateDim) {
     std::ostringstream stream;
     stream << "stateTrajectory dimension mismatch vs active reference: expected "
            << expectedStateDim << ", got " << stateDim << ".";
     throwTargetTrajectoriesError(stream.str());
   }
 
-  const auto expectedInputDim = inferDimFromTrajectory(referenceTrajectories.inputTrajectory);
-  if (expectedInputDim > 0) {
-    if (targetTrajectories.inputTrajectory.empty()) {
-      std::ostringstream stream;
-      stream << "inputTrajectory is empty but active reference expects dimension "
-             << expectedInputDim << ".";
-      throwTargetTrajectoriesError(stream.str());
-    }
-    if (inputDim != expectedInputDim) {
-      std::ostringstream stream;
-      stream << "inputTrajectory dimension mismatch vs active reference: expected "
-             << expectedInputDim << ", got " << inputDim << ".";
-      throwTargetTrajectoriesError(stream.str());
+  bool hasReferenceInput = false;
+  const auto expectedInputDim =
+      inferDimFromTrajectory(referenceTrajectories.inputTrajectory,
+                            hasReferenceInput);
+  if (hasReferenceInput && !targetTrajectories.inputTrajectory.empty() &&
+      inputDim != expectedInputDim) {
+    std::ostringstream stream;
+    stream << "inputTrajectory dimension mismatch vs active reference: expected "
+           << expectedInputDim << ", got " << inputDim << ".";
+    throwTargetTrajectoriesError(stream.str());
+  }
+  if (hasReferenceInput && targetTrajectories.inputTrajectory.empty() &&
+      expectedInputDim > 0) {
+    std::ostringstream stream;
+    stream << "inputTrajectory is empty but active reference expects dimension "
+           << expectedInputDim << ".";
+    throwTargetTrajectoriesError(stream.str());
+  }
+  if (hasReferenceInput && expectedInputDim == 0 &&
+      !targetTrajectories.inputTrajectory.empty()) {
+    for (size_t i = 0; i < N; i++) {
+      if (targetTrajectories.inputTrajectory[i].size() != 0) {
+        std::ostringstream stream;
+        stream << "inputTrajectory must be zero-dimension at index " << i
+               << " to match active reference.";
+        throwTargetTrajectoriesError(stream.str());
+      }
     }
   }
 }

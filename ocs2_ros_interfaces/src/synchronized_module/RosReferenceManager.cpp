@@ -54,8 +54,14 @@ void RosReferenceManager::subscribe(const rclcpp::Node::SharedPtr& node) {
   node_ = node;
   // ModeSchedule
   auto modeScheduleCallback = [this](const ocs2_msgs::msg::ModeSchedule& msg) {
-    auto modeSchedule = ros_msg_conversions::readModeScheduleMsg(msg);
-    referenceManagerPtr_->setModeSchedule(std::move(modeSchedule));
+    try {
+      auto modeSchedule = ros_msg_conversions::readModeScheduleMsg(msg);
+      referenceManagerPtr_->setModeSchedule(std::move(modeSchedule));
+    } catch (const std::exception& e) {
+      RCLCPP_ERROR_STREAM(node_->get_logger(),
+                          "[RosReferenceManager] Dropping invalid mode schedule: "
+                              << e.what());
+    }
   };
   modeScheduleSubscriber_ =
       node_->create_subscription<ocs2_msgs::msg::ModeSchedule>(
@@ -64,10 +70,16 @@ void RosReferenceManager::subscribe(const rclcpp::Node::SharedPtr& node) {
   // TargetTrajectories
   auto targetTrajectoriesCallback =
       [this](const ocs2_msgs::msg::MpcTargetTrajectories& msg) {
-        auto targetTrajectories =
-            ros_msg_conversions::readTargetTrajectoriesMsg(msg);
-        referenceManagerPtr_->setTargetTrajectories(
-            std::move(targetTrajectories));
+        try {
+          auto targetTrajectories =
+              ros_msg_conversions::readTargetTrajectoriesMsg(msg);
+          referenceManagerPtr_->setTargetTrajectories(
+              std::move(targetTrajectories));
+        } catch (const std::exception& e) {
+          RCLCPP_ERROR_STREAM(node_->get_logger(),
+                              "[RosReferenceManager] Dropping invalid target trajectories: "
+                                  << e.what());
+        }
       };
   targetTrajectoriesSubscriber_ =
       node_->create_subscription<ocs2_msgs::msg::MpcTargetTrajectories>(

@@ -32,10 +32,105 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_ros_interfaces/common/RosMsgConversions.h"
 
 #include <stdexcept>
+#include <sstream>
 
 const rclcpp::Logger LOGGER = rclcpp::get_logger("MPC_ROS_Interface");
 
 namespace ocs2 {
+namespace {
+
+size_t inferDimFromTrajectory(const vector_array_t& trajectory) {
+  for (const auto& sample : trajectory) {
+    if (sample.size() > 0) {
+      return sample.size();
+    }
+  }
+  return 0;
+}
+
+[[noreturn]] void throwTargetTrajectoriesError(const std::string& message) {
+  throw std::runtime_error(
+      std::string("[MPC_ROS_Interface] Invalid reset target trajectories: ") +
+      message);
+}
+
+void validateResetTargetTrajectories(
+    const TargetTrajectories& targetTrajectories,
+    const TargetTrajectories& referenceTrajectories) {
+  const auto N = targetTrajectories.timeTrajectory.size();
+  if (N == 0) {
+    throwTargetTrajectoriesError("timeTrajectory is empty.");
+  }
+  if (targetTrajectories.stateTrajectory.size() != N) {
+    throwTargetTrajectoriesError("stateTrajectory length does not match timeTrajectory.");
+  }
+  if (!targetTrajectories.inputTrajectory.empty() &&
+      targetTrajectories.inputTrajectory.size() != N) {
+    throwTargetTrajectoriesError("inputTrajectory length does not match timeTrajectory.");
+  }
+
+  for (size_t i = 1; i < N; i++) {
+    if (!(targetTrajectories.timeTrajectory[i - 1] <
+          targetTrajectories.timeTrajectory[i])) {
+      std::ostringstream stream;
+      stream << "timeTrajectory must be strictly increasing, but t[" << i - 1
+             << "]=" << targetTrajectories.timeTrajectory[i - 1] << " and t["
+             << i << "]=" << targetTrajectories.timeTrajectory[i] << ".";
+      throwTargetTrajectoriesError(stream.str());
+    }
+  }
+
+  const auto stateDim = targetTrajectories.stateTrajectory.front().size();
+  for (size_t i = 0; i < N; i++) {
+    const auto sampleDim = targetTrajectories.stateTrajectory[i].size();
+    if (sampleDim != stateDim) {
+      std::ostringstream stream;
+      stream << "stateTrajectory dimension mismatch at index " << i
+             << ": expected " << stateDim << ", got " << sampleDim << ".";
+      throwTargetTrajectoriesError(stream.str());
+    }
+  }
+
+  size_t inputDim = 0;
+  if (!targetTrajectories.inputTrajectory.empty()) {
+    inputDim = targetTrajectories.inputTrajectory.front().size();
+    for (size_t i = 0; i < N; i++) {
+      const auto sampleDim = targetTrajectories.inputTrajectory[i].size();
+      if (sampleDim != inputDim) {
+        std::ostringstream stream;
+        stream << "inputTrajectory dimension mismatch at index " << i
+               << ": expected " << inputDim << ", got " << sampleDim << ".";
+        throwTargetTrajectoriesError(stream.str());
+      }
+    }
+  }
+
+  const auto expectedStateDim = inferDimFromTrajectory(referenceTrajectories.stateTrajectory);
+  if (expectedStateDim > 0 && stateDim != expectedStateDim) {
+    std::ostringstream stream;
+    stream << "stateTrajectory dimension mismatch vs active reference: expected "
+           << expectedStateDim << ", got " << stateDim << ".";
+    throwTargetTrajectoriesError(stream.str());
+  }
+
+  const auto expectedInputDim = inferDimFromTrajectory(referenceTrajectories.inputTrajectory);
+  if (expectedInputDim > 0) {
+    if (targetTrajectories.inputTrajectory.empty()) {
+      std::ostringstream stream;
+      stream << "inputTrajectory is empty but active reference expects dimension "
+             << expectedInputDim << ".";
+      throwTargetTrajectoriesError(stream.str());
+    }
+    if (inputDim != expectedInputDim) {
+      std::ostringstream stream;
+      stream << "inputTrajectory dimension mismatch vs active reference: expected "
+             << expectedInputDim << ", got " << inputDim << ".";
+      throwTargetTrajectoriesError(stream.str());
+    }
+  }
+}
+
+}  // namespace
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -82,16 +177,27 @@ void MPC_ROS_Interface::resetMpcCallback(
     const std::shared_ptr<ocs2_msgs::srv::Reset::Request> req,
     std::shared_ptr<ocs2_msgs::srv::Reset::Response> res) {
   if (req->reset) {
-    auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(
-        req->target_trajectories);
-    resetMpcNode(std::move(targetTrajectories));
-    res->done = true;
+    try {
+      auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(
+          req->target_trajectories);
+      const auto& referenceTrajectories =
+          mpc_.getSolverPtr()->getReferenceManager().getTargetTrajectories();
+      validateResetTargetTrajectories(targetTrajectories, referenceTrajectories);
 
-    std::cerr << "\n#####################################################"
-              << "\n#####################################################"
-              << "\n#################  MPC is reset.  ###################"
-              << "\n#####################################################"
-              << "\n#####################################################\n";
+      resetMpcNode(std::move(targetTrajectories));
+      res->done = true;
+
+      std::cerr << "\n#####################################################"
+                << "\n#####################################################"
+                << "\n#################  MPC is reset.  ###################"
+                << "\n#####################################################"
+                << "\n#####################################################\n";
+    } catch (const std::exception& e) {
+      res->done = false;
+      RCLCPP_ERROR_STREAM(LOGGER,
+                          "[MPC_ROS_Interface] Reset request failed: "
+                              << e.what());
+    }
   } else {
     res->done = false;
     RCLCPP_WARN_STREAM(LOGGER, "[MPC_ROS_Interface] Reset request failed!");

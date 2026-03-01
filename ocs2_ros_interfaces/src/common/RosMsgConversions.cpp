@@ -208,17 +208,32 @@ ocs2_msgs::msg::MpcTargetTrajectories createTargetTrajectoriesMsg(
 /******************************************************************************************************/
 TargetTrajectories readTargetTrajectoriesMsg(
     const ocs2_msgs::msg::MpcTargetTrajectories& targetTrajectoriesMsg) {
-  size_t N = targetTrajectoriesMsg.state_trajectory.size();
-  if (N == 0) {
+  const size_t stateTrajectorySize = targetTrajectoriesMsg.state_trajectory.size();
+  const size_t timeTrajectorySize = targetTrajectoriesMsg.time_trajectory.size();
+  const size_t inputTrajectorySize = targetTrajectoriesMsg.input_trajectory.size();
+  if (stateTrajectorySize == 0) {
     throw std::runtime_error(
         "An empty target trajectories message is received.");
   }
+  if (timeTrajectorySize != stateTrajectorySize) {
+    throw std::runtime_error(
+        "Target trajectories message has mismatched time/state trajectory lengths.");
+  }
+  if (inputTrajectorySize != 0 && inputTrajectorySize != stateTrajectorySize) {
+    throw std::runtime_error(
+        "Target trajectories message has mismatched input/state trajectory lengths.");
+  }
 
   // state and time
+  const size_t N = stateTrajectorySize;
   scalar_array_t desiredTimeTrajectory(N);
   vector_array_t desiredStateTrajectory(N);
   for (size_t i = 0; i < N; i++) {
     desiredTimeTrajectory[i] = targetTrajectoriesMsg.time_trajectory[i];
+    if (i > 0 && !(desiredTimeTrajectory[i - 1] < desiredTimeTrajectory[i])) {
+      throw std::runtime_error(
+          "Target trajectories message has non-increasing time trajectory.");
+    }
 
     desiredStateTrajectory[i] =
         Eigen::Map<const Eigen::VectorXf>(
@@ -228,9 +243,8 @@ TargetTrajectories readTargetTrajectoriesMsg(
   }  // end of i loop
 
   // input
-  N = targetTrajectoriesMsg.input_trajectory.size();
-  vector_array_t desiredInputTrajectory(N);
-  for (size_t i = 0; i < N; i++) {
+  vector_array_t desiredInputTrajectory(inputTrajectorySize);
+  for (size_t i = 0; i < inputTrajectorySize; i++) {
     desiredInputTrajectory[i] =
         Eigen::Map<const Eigen::VectorXf>(
             targetTrajectoriesMsg.input_trajectory[i].value.data(),

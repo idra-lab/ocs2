@@ -249,14 +249,21 @@ void MRT_ROS_Interface::readPolicyMsg(
 /******************************************************************************************************/
 void MRT_ROS_Interface::mpcPolicyCallback(
     const ocs2_msgs::msg::MpcFlattenedController::ConstSharedPtr& msg) {
-  // read new policy and command from msg
-  auto commandPtr = std::make_unique<CommandData>();
-  auto primalSolutionPtr = std::make_unique<PrimalSolution>();
-  auto performanceIndicesPtr = std::make_unique<PerformanceIndex>();
-  readPolicyMsg(*msg, *commandPtr, *primalSolutionPtr, *performanceIndicesPtr);
+  try {
+    // read new policy and command from msg
+    auto commandPtr = std::make_unique<CommandData>();
+    auto primalSolutionPtr = std::make_unique<PrimalSolution>();
+    auto performanceIndicesPtr = std::make_unique<PerformanceIndex>();
+    readPolicyMsg(*msg, *commandPtr, *primalSolutionPtr,
+                  *performanceIndicesPtr);
 
-  this->moveToBuffer(std::move(commandPtr), std::move(primalSolutionPtr),
-                     std::move(performanceIndicesPtr));
+    this->moveToBuffer(std::move(commandPtr), std::move(primalSolutionPtr),
+                       std::move(performanceIndicesPtr));
+  } catch (const std::exception& e) {
+    RCLCPP_ERROR_STREAM(LOGGER,
+                        "[MRT_ROS_Interface] Dropping invalid policy message: "
+                            << e.what());
+  }
 }
 
 /******************************************************************************************************/

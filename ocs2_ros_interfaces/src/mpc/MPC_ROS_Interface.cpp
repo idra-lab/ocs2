@@ -31,6 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ros_interfaces/common/RosMsgConversions.h"
 
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
+#include <diagnostic_msgs/msg/key_value.hpp>
+
 #include <stdexcept>
 #include <sstream>
 
@@ -38,6 +41,13 @@ const rclcpp::Logger LOGGER = rclcpp::get_logger("MPC_ROS_Interface");
 
 namespace ocs2 {
 namespace {
+
+diagnostic_msgs::msg::KeyValue kv(std::string key, std::string value) {
+  diagnostic_msgs::msg::KeyValue item;
+  item.key = std::move(key);
+  item.value = std::move(value);
+  return item;
+}
 
 size_t inferDimFromTrajectory(const vector_array_t& trajectory,
                               bool& hasSamples) {
@@ -402,6 +412,39 @@ void MPC_ROS_Interface::mpcObservationCallback(
   // measure the delay for sending ROS messages
   mpcTimer_.endTimer();
 
+  if (mpcSolverDiagnosticsPublisher_) {
+    const auto& performanceIndices = *bufferPerformanceIndicesPtr_;
+    const auto iterationsUsed = mpc_.getSolverPtr()->getIterationsLog().size();
+
+    diagnostic_msgs::msg::DiagnosticStatus status;
+    status.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+    status.name = topicPrefix_ + "/mpc_solver";
+    status.hardware_id = topicPrefix_;
+    status.message = "solver diagnostics";
+    status.values.reserve(13);
+    status.values.push_back(kv("solve_time_last_ms", std::to_string(mpcTimer_.getLastIntervalInMilliseconds())));
+    status.values.push_back(kv("solve_time_avg_ms", std::to_string(mpcTimer_.getAverageInMilliseconds())));
+    status.values.push_back(kv("solve_time_max_ms", std::to_string(mpcTimer_.getMaxIntervalInMilliseconds())));
+    status.values.push_back(kv("solve_time_samples", std::to_string(mpcTimer_.getNumTimedIntervals())));
+    status.values.push_back(kv("ddp_iterations_used", std::to_string(iterationsUsed)));
+    status.values.push_back(kv("perf_merit", std::to_string(performanceIndices.merit)));
+    status.values.push_back(kv("perf_cost", std::to_string(performanceIndices.cost)));
+    status.values.push_back(kv("perf_dual_feas_sse", std::to_string(performanceIndices.dualFeasibilitiesSSE)));
+    status.values.push_back(
+        kv("perf_dynamics_violation_sse", std::to_string(performanceIndices.dynamicsViolationSSE)));
+    status.values.push_back(
+        kv("perf_eq_constraints_sse", std::to_string(performanceIndices.equalityConstraintsSSE)));
+    status.values.push_back(
+        kv("perf_ineq_constraints_sse", std::to_string(performanceIndices.inequalityConstraintsSSE)));
+    status.values.push_back(kv("perf_eq_lagrangian", std::to_string(performanceIndices.equalityLagrangian)));
+    status.values.push_back(kv("perf_ineq_lagrangian", std::to_string(performanceIndices.inequalityLagrangian)));
+
+    diagnostic_msgs::msg::DiagnosticArray diagnosticsMsg;
+    diagnosticsMsg.header.stamp = node_->now();
+    diagnosticsMsg.status.push_back(std::move(status));
+    mpcSolverDiagnosticsPublisher_->publish(diagnosticsMsg);
+  }
+
   // check MPC delay and solution window compatibility
   scalar_t timeWindow = mpc_.settings().solutionTimeWindow_;
   if (mpc_.settings().solutionTimeWindow_ < 0) {
@@ -496,6 +539,8 @@ void MPC_ROS_Interface::launchNodes(const rclcpp::Node::SharedPtr& node) {
   mpcPolicyPublisher_ =
       node_->create_publisher<ocs2_msgs::msg::MpcFlattenedController>(
           topicPrefix_ + "_mpc_policy", latchedQos);
+  mpcSolverDiagnosticsPublisher_ =
+      node_->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(topicPrefix_ + "_mpc_solver_diagnostics", 10);
 
   // MPC reset service server
   mpcResetServiceServer_ = node_->create_service<ocs2_msgs::srv::Reset>(

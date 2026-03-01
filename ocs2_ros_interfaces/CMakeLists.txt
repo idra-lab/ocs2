@@ -12,6 +12,7 @@ find_package(ocs2_mpc REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(diagnostic_msgs REQUIRED)
 find_package(interactive_markers REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(Boost REQUIRED COMPONENTS system filesystem log_setup log)
@@ -45,6 +46,7 @@ ament_target_dependencies(${PROJECT_NAME}
   std_msgs
   visualization_msgs
   geometry_msgs
+  diagnostic_msgs
   interactive_markers
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
@@ -97,6 +99,7 @@ ament_export_dependencies(
   std_msgs
   visualization_msgs
   geometry_msgs
+  diagnostic_msgs
   interactive_markers
   Eigen3
   Boost

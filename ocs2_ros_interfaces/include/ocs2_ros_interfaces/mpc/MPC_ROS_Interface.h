@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <ocs2_msgs/msg/mode_schedule.hpp>
 #include <ocs2_msgs/msg/mpc_flattened_controller.hpp>
 #include <ocs2_msgs/msg/mpc_observation.hpp>
@@ -163,6 +164,8 @@ class MPC_ROS_Interface {
       mpcTargetTrajectoriesSubscriber_;
   rclcpp::Publisher<ocs2_msgs::msg::MpcFlattenedController>::SharedPtr
       mpcPolicyPublisher_;
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
+      mpcSolverDiagnosticsPublisher_;
   rclcpp::Service<ocs2_msgs::srv::Reset>::SharedPtr mpcResetServiceServer_;
 
   std::unique_ptr<CommandData> bufferCommandPtr_;

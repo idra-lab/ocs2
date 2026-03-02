@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/multiple_shooting/Transcription.h>
 #include <ocs2_oc/oc_problem/OcpSize.h>
 #include <ocs2_oc/trajectory_adjustment/TrajectorySpreadingHelperFunctions.h>
+#include <fstream>
 
 namespace ocs2 {
 

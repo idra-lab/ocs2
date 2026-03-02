@@ -66,6 +66,18 @@ class PinocchioGeometryInterface final {
   PinocchioGeometryInterface(const PinocchioInterface& pinocchioInterface,
                              const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                              const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
+  /**
+   * Constructor
+   *
+   * @param [in] pinocchioInterface: pinocchio interface of the robot model
+   * @param [in] collisionLinkPairs: List of collision link pairs by string name. One link can contain multiple colision objects.
+   *                                 In this case, all collision object combinations are added.
+   * @param [in] collisionObjectPairs: List of collision object index pairs
+   */
+  PinocchioGeometryInterface(const PinocchioInterface& pinocchioInterface,
+                             const std::string& urdfFile,
+                             const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
+                             const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs = std::vector<std::pair<size_t, size_t>>());
 
   /**
    * Compute collision pair distances
@@ -86,7 +98,8 @@ class PinocchioGeometryInterface final {
 
  private:
   // Construction helpers
-  void buildGeomFromPinocchioInterface(const PinocchioInterface& pinocchioInterface, pinocchio::GeometryModel& geomModel);
+  void buildGeomFromPinocchioInterface(const PinocchioInterface& pinocchioInterface, const std::string &urdfFile, pinocchio::GeometryModel& geomModel);
+     void buildGeomFromPinocchioInterface(const PinocchioInterface& pinocchioInterface, pinocchio::GeometryModel& geomModel);
   void addCollisionObjectPairs(const PinocchioInterface& pinocchioInterface,
                                const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs);
   void addCollisionLinkPairs(const PinocchioInterface& pinocchioInterface,

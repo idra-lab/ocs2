@@ -43,6 +43,9 @@ inline ocs2_msgs::mode_schedule createModeSequenceTemplateMsg(const ModeSequence
   ocs2_msgs::mode_schedule modeScheduleMsg;
   modeScheduleMsg.eventTimes.assign(modeSequenceTemplate.switchingTimes.begin(), modeSequenceTemplate.switchingTimes.end());
   modeScheduleMsg.modeSequence.assign(modeSequenceTemplate.modeSequence.begin(), modeSequenceTemplate.modeSequence.end());
+  std::cerr << "modeScheduleMsg"<< std::endl;
+  std::cerr << modeScheduleMsg << std::endl;
+
   return modeScheduleMsg;
 }
 

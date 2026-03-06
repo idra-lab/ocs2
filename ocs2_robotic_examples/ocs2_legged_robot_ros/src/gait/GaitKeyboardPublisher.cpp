@@ -36,7 +36,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_msgs/mode_schedule.h>
 
 #include "ocs2_legged_robot_ros/gait/ModeSequenceTemplateRos.h"
+#include<sensor_msgs/Joy.h>
 
+std::string gaitCommandPrev = "";
 namespace ocs2 {
 namespace legged_robot {
 
@@ -49,7 +51,8 @@ GaitKeyboardPublisher::GaitKeyboardPublisher(ros::NodeHandle nodeHandle, const s
   loadData::loadStdVector(gaitFile, "list", gaitList_, verbose);
 
   modeSequenceTemplatePublisher_ = nodeHandle.advertise<ocs2_msgs::mode_schedule>(robotName + "_mpc_mode_schedule", 1, true);
-
+  //ros::Subscriber joyModeSubscribe;
+  //joyModeSubscribe = nodeHandle.subscribe<sensor_msgs::Joy>("joy", 10, &GaitKeyboardPublisher::getMsgCommand, this);
   gaitMap_.clear();
   for (const auto& gaitName : gaitList_) {
     gaitMap_.insert({gaitName, loadModeSequenceTemplate(gaitFile, gaitName, verbose)});
@@ -104,6 +107,35 @@ void GaitKeyboardPublisher::printGaitList(const std::vector<std::string>& gaitLi
     std::cout << "[" << itr++ << "]: " << s << "\n";
   }
   std::cout << std::endl;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+
+void GaitKeyboardPublisher::getMsgCommand(const sensor_msgs::JoyConstPtr& joy)
+{
+  std::string gaitCommand = "";
+  if (joy -> buttons[3] == 1 || joy -> buttons[2] == 1){
+    if(joy -> buttons[3] == 1){
+      gaitCommand = "trot";
+    }
+    else if(joy -> buttons[2] == 1){
+      gaitCommand = "stance";
+    }
+    if (gaitCommandPrev != gaitCommand){
+      try {
+        ModeSequenceTemplate modeSequenceTemplate = gaitMap_.at(gaitCommand);
+        modeSequenceTemplatePublisher_.publish(createModeSequenceTemplateMsg(modeSequenceTemplate));
+        gaitCommandPrev = gaitCommand;
+      } catch (const std::out_of_range& e) {
+        std::cout << "Gait \"" << gaitCommand << "\" not found.\n";
+        printGaitList(gaitList_);
+      }
+    }
+  }
+
+  
 }
 
 }  // namespace legged_robot

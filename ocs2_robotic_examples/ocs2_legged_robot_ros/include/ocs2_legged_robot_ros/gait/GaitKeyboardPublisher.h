@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
-
+#include<sensor_msgs/Joy.h>
 #include <ocs2_legged_robot/gait/ModeSequenceTemplate.h>
 
 namespace ocs2 {
@@ -47,6 +47,7 @@ class GaitKeyboardPublisher {
 
   /** Prints the command line interface and responds to user input. Function returns after one user input. */
   void getKeyboardCommand();
+  void getMsgCommand(const sensor_msgs::JoyConstPtr& joy);
 
  private:
   /** Prints the list of available gaits. */

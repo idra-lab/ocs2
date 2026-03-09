@@ -27,36 +27,34 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#pragma once
+#include <ros/init.h>
+#include <ros/package.h>
 
-#include <string>
-#include <vector>
+#include "ocs2_legged_robot_ros/gait/GaitJoypadPublisher.h"
 
-#include <ros/ros.h>
-#include <std_msgs/Bool.h>
 
-#include <ocs2_legged_robot/gait/ModeSequenceTemplate.h>
+using namespace ocs2;
+using namespace legged_robot;
 
-namespace ocs2 {
-namespace legged_robot {
+int main(int argc, char* argv[]) {
+  const std::string robotName = "legged_robot";
 
-/** This class implements ModeSequence communication using ROS. */
-class GaitKeyboardPublisher {
- public:
-  GaitKeyboardPublisher(ros::NodeHandle nodeHandle, const std::string& gaitFile, const std::string& robotName, bool verbose = false);
+  // Initialize ros node
+  ros::init(argc, argv, robotName + "_mpc_mode_schedule");
+  ros::NodeHandle nodeHandle;
+  ros::Subscriber joyModeSubscribe;
+  // Get node parameters
+  std::string gaitCommandFile;
+  nodeHandle.getParam("/gaitCommandFile", gaitCommandFile);
+  std::cerr << "Loading gait file: " << gaitCommandFile << std::endl;
+  
+  GaitJoypadPublisher gaitCommand(nodeHandle, gaitCommandFile, robotName, true);
+  joyModeSubscribe = nodeHandle.subscribe<sensor_msgs::Joy>("/joy", 1, &GaitJoypadPublisher::getJoyMsgCommand, &gaitCommand);
 
-  /** Prints the command line interface and responds to user input. Function returns after one user input. */
-  void getKeyboardCommand();
+  
+  ros::spin();
 
- private:
-  /** Prints the list of available gaits. */
-  void printGaitList(const std::vector<std::string>& gaitList) const;
 
-  std::vector<std::string> gaitList_;
-  std::map<std::string, ModeSequenceTemplate> gaitMap_;
-
-  ros::Publisher modeSequenceTemplatePublisher_;
-};
-
-}  // namespace legged_robot
-}  // end of namespace ocs2
+  // Successful exit
+  return 0;
+}

@@ -76,6 +76,7 @@ link_directories(
 # Main library
 add_library(${PROJECT_NAME}
   src/gait/GaitKeyboardPublisher.cpp
+  src/gait/GaitJoypadPublisher.cpp
   src/gait/GaitReceiver.cpp
   src/visualization/LeggedRobotVisualizer.cpp
 )
@@ -164,7 +165,7 @@ target_link_libraries(legged_robot_target
 )
 target_compile_options(legged_robot_target PRIVATE ${OCS2_CXX_FLAGS})
 
-# Keyboard command node for gait
+# Keyboard command node to pick a gait from a list loaded from file
 add_executable(legged_robot_gait_command
   src/LeggedRobotGaitCommandNode.cpp
 )
@@ -173,11 +174,30 @@ add_dependencies(legged_robot_gait_command
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
+
 target_link_libraries(legged_robot_gait_command
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
+
 target_compile_options(legged_robot_gait_command PRIVATE ${OCS2_CXX_FLAGS})
+
+
+# Joypad command node to select between trot and stance gaits
+add_executable(legged_robot_gait_joy_command
+  src/LeggedRobotGaitJoyCommandNode.cpp
+)
+add_dependencies(legged_robot_gait_joy_command
+  ${PROJECT_NAME}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+
+target_link_libraries(legged_robot_gait_joy_command
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_compile_options(legged_robot_gait_joy_command PRIVATE ${OCS2_CXX_FLAGS})
 
 #########################
 ###   CLANG TOOLING   ###

@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_legged_robot_ros/gait/GaitKeyboardPublisher.h"
 
-
 using namespace ocs2;
 using namespace legged_robot;
 
@@ -42,22 +41,16 @@ int main(int argc, char* argv[]) {
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mpc_mode_schedule");
   ros::NodeHandle nodeHandle;
-  ros::Subscriber joyModeSubscribe;
   // Get node parameters
   std::string gaitCommandFile;
   nodeHandle.getParam("/gaitCommandFile", gaitCommandFile);
   std::cerr << "Loading gait file: " << gaitCommandFile << std::endl;
-  
+
   GaitKeyboardPublisher gaitCommand(nodeHandle, gaitCommandFile, robotName, true);
-  joyModeSubscribe = nodeHandle.subscribe<sensor_msgs::Joy>("joy", 1, &GaitKeyboardPublisher::getMsgCommand, &gaitCommand);
-  //while (ros::ok() && ros::master::check()) {
-  //gaitCommand.getKeyboardCommand();
-  //if (joy -> buttons[3] == 1){
-  //gaitCommand.getMsgCommand();
-  //}
-  
-  ros::spin();
-  //}
+
+  while (ros::ok() && ros::master::check()) {
+    gaitCommand.getKeyboardCommand();
+  }
 
   // Successful exit
   return 0;

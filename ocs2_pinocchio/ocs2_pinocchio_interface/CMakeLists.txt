@@ -14,8 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(pinocchio REQUIRED pinocchio)
-
+find_package(pinocchio REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 # Add pinocchio configurations
@@ -34,7 +33,7 @@ catkin_package(
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
-    pinocchio
+  #  pinocchio
   CFG_EXTRAS
     pinocchio_config.cmake
 )

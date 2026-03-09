@@ -59,13 +59,9 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const PinocchioInterface&
                                                        const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                                                        const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs)
     : geometryModelPtr_(std::make_shared<pinocchio::GeometryModel>()) {
-    std::cerr << "DEBUGG PinocchioGeometryInterface 1" << std::endl;
   buildGeomFromPinocchioInterface(pinocchioInterface, *geometryModelPtr_);
-std::cerr << "DEBUGG PinocchioGeometryInterface 2" << std::endl;
   addCollisionObjectPairs(pinocchioInterface, collisionObjectPairs);
-std::cerr << "DEBUGG PinocchioGeometryInterface 3" << std::endl;
   addCollisionLinkPairs(pinocchioInterface, collisionLinkPairs);
-std::cerr << "DEBUGG PinocchioGeometryInterface 4" << std::endl;
 }
 
 PinocchioGeometryInterface::PinocchioGeometryInterface(const PinocchioInterface& pinocchioInterface,
@@ -73,13 +69,9 @@ PinocchioGeometryInterface::PinocchioGeometryInterface(const PinocchioInterface&
                                                        const std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                                                        const std::vector<std::pair<size_t, size_t>>& collisionObjectPairs)
     : geometryModelPtr_(std::make_shared<pinocchio::GeometryModel>()) {
-    std::cerr << "DEBUGG PinocchioGeometryInterface 1" << std::endl;
     buildGeomFromPinocchioInterface(pinocchioInterface, urdfFile, *geometryModelPtr_);
-    std::cerr << "DEBUGG PinocchioGeometryInterface 2" << std::endl;
     addCollisionObjectPairs(pinocchioInterface, collisionObjectPairs);
-    std::cerr << "DEBUGG PinocchioGeometryInterface 3" << std::endl;
     addCollisionLinkPairs(pinocchioInterface, collisionLinkPairs);
-    std::cerr << "DEBUGG PinocchioGeometryInterface 4" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -111,7 +103,6 @@ void PinocchioGeometryInterface::buildGeomFromPinocchioInterface(const Pinocchio
         throw std::runtime_error("The PinocchioInterface passed to PinocchioGeometryInterface(...) does not contain a urdf model!");
     }
 
-    std::cerr << "URDF MODEL PTR " << pinocchioInterface.getUrdfModelPtr() << std::endl;
 
     // TODO: Replace with pinocchio function that uses the ModelInterface directly.
     // Pinocchio still expects a URDF stream here, so export the URDFDOM model to a tinyxml2 document first.
@@ -135,7 +126,6 @@ void PinocchioGeometryInterface::buildGeomFromPinocchioInterface(const Pinocchio
         throw std::runtime_error("The PinocchioInterface passed to PinocchioGeometryInterface(...) does not contain a urdf model!");
     }
 
-    std::cerr << "URDF MODEL PTR " << pinocchioInterface.getUrdfModelPtr() << std::endl;
 
     // TODO: Replace with pinocchio function that uses the ModelInterface directly.
     // Pinocchio still expects a URDF stream here, so export the URDFDOM model to a tinyxml2 document first.

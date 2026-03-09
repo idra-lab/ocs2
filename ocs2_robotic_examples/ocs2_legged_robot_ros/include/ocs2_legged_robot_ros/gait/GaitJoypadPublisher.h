@@ -34,24 +34,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
-
+#include<sensor_msgs/Joy.h>
 #include <ocs2_legged_robot/gait/ModeSequenceTemplate.h>
 
 namespace ocs2 {
 namespace legged_robot {
 
 /** This class implements ModeSequence communication using ROS. */
-class GaitKeyboardPublisher {
+class GaitJoypadPublisher {
  public:
-  GaitKeyboardPublisher(ros::NodeHandle nodeHandle, const std::string& gaitFile, const std::string& robotName, bool verbose = false);
+  GaitJoypadPublisher(ros::NodeHandle nodeHandle, const std::string& gaitFile, const std::string& robotName, bool verbose = false);
 
-  /** Prints the command line interface and responds to user input. Function returns after one user input. */
-  void getKeyboardCommand();
+
+  void getJoyMsgCommand(const sensor_msgs::JoyConstPtr& joy);
 
  private:
-  /** Prints the list of available gaits. */
-  void printGaitList(const std::vector<std::string>& gaitList) const;
-
   std::vector<std::string> gaitList_;
   std::map<std::string, ModeSequenceTemplate> gaitMap_;
 

@@ -13,10 +13,10 @@ find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
+find_package(urdfdom REQUIRED)
 find_package(PkgConfig REQUIRED)
 find_package(pinocchio REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-
 # Add pinocchio configurations
 include(cmake/pinocchio_config.cmake)
 
@@ -47,6 +47,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${pinocchio_INCLUDE_DIRS}
+  ${urdfdom_INCLUDE_DIRS}
 )
 
 # ocs2 pinocchio interface library

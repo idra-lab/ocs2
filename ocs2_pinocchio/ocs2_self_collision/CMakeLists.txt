@@ -16,9 +16,11 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(coal REQUIRED coal)
+
+#find_package(coal REQUIRED)
 find_package(pinocchio REQUIRED)
 # requires liboctomap-dev and libassimp-dev
-
+find_package(urdfdom REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 ###################################
@@ -56,11 +58,13 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${pinocchio_INCLUDE_DIRS}
   ${coal_INCLUDE_DIRS}
+  ${urdfdom_INCLUDE_DIRS}
 )
 
-#link_directories(
-#  ${pinocchio_LIBRARY_DIRS}
-#)
+link_directories(
+  ${pinocchio_LIBRARY_DIRS}
+  ${coal_LIBRARY_DIRS}
+)
 
 # ocs2 pinocchio interface library
 add_library(${PROJECT_NAME}
@@ -75,7 +79,8 @@ add_dependencies(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  pinocchio::pinocchio
+  ${coal_LIBRARIES}
+  ${pinocchio_LIBRARIES}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})
 

@@ -25,7 +25,6 @@ jobs:
       run: |
         pwd
         uname -r
-        lsb_release -a
 
     - name: System deps
       run: |

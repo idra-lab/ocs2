@@ -15,8 +15,10 @@ jobs:
       matrix:
         build_type: [ Release ]
 
-    # environment: regular Ubuntu with a vanilla ROS container
+    # environment: regular Ubuntu with container
     runs-on: ubuntu-24.04
+    container:
+      image: ubuntu:24.04
 
     steps:
     - name: Environment Info
@@ -35,11 +37,11 @@ jobs:
         curl -sSL https://ros.packages.techfak.net/gpg.key -o /etc/apt/keyrings/ros-one-keyring.gpg
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/ros-one-keyring.gpg] https://ros.packages.techfak.net $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ros1.list
         apt update
-        apt install python3-rosdep
+        apt install -y python3-rosdep
         rosdep init
         echo "yaml https://ros.packages.techfak.net/ros-one.yaml one" | sudo tee /etc/ros/rosdep/sources.list.d/1-ros-one.list
         rosdep update
-        apt install ros-one-desktop
+        apt install -y ros-one-desktop
 
     - name: Pinocchio from robotpkg
       run: |

@@ -89,7 +89,7 @@ jobs:
       shell: bash
       run: |
         source /opt/ros/one/setup.bash
-        catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2 --cmake-args -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} 
+        catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2_legged_robot_ros ocs2_self_collision_visualization --cmake-args -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} 
         
     # - name: Test
     #   shell: bash

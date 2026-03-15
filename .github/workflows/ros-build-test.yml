@@ -2,7 +2,7 @@ name: Build and Test OCS2
 
 on:
   push:
-    branches: [ ros-one-devel ]
+    branches: [ ubuntu24-ci ]
   pull_request:
     branches: [ ros-one-devel ]
   workflow_dispatch:

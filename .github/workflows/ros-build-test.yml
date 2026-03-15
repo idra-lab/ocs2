@@ -86,7 +86,7 @@ jobs:
       run: |
         source /opt/ros/one/setup.bash
         catkin init
-        ctking config --cmake-args -DCMAKE_BUILD_TYPE=Release
+        catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
         catkin build ocs2_legged_robot_ros ocs2_self_collision_visualization  
         
     # - name: Test

@@ -51,8 +51,8 @@ jobs:
         echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/robotpkg.asc] http://robotpkg.openrobots.org/packages/debian/pub $(lsb_release -cs) robotpkg" | tee /etc/apt/sources.list.d/robotpkg.list
         apt-get update
         apt-get install -y robotpkg-coal robotpkg-pinocchio
-        export CMAKE_PREFIX_PATH=/opt/openrobots:${CMAKE_PREFIX_PATH}
-        export LD_LIBRARY_PATH=/opt/openrobots/lib:${LD_LIBRARY_PATH}
+        echo "CMAKE_PREFIX_PATH=/opt/openrobots:${CMAKE_PREFIX_PATH}" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=/opt/openrobots/lib:${LD_LIBRARY_PATH}" >> $GITHUB_ENV
 
     - uses: actions/checkout@v4
       with: 

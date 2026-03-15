@@ -23,8 +23,8 @@ jobs:
     steps:
     - name: Environment Info
       run: |
-        apt update 
-        apt install lsb-release
+        apt-get update 
+        apt-get install lsb-release
         pwd
         uname -r
         lsb_release -a
@@ -38,19 +38,19 @@ jobs:
       run: |
         curl -sSL https://ros.packages.techfak.net/gpg.key -o /etc/apt/keyrings/ros-one-keyring.gpg
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/ros-one-keyring.gpg] https://ros.packages.techfak.net $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros1.list
-        apt update
-        apt install -y python3-rosdep
+        apt-get update
+        apt-get install -y python3-rosdep
         rosdep init
         echo "yaml https://ros.packages.techfak.net/ros-one.yaml one" | tee /etc/ros/rosdep/sources.list.d/1-ros-one.list
         rosdep update
-        apt install -y ros-one-desktop
+        apt-get install -y ros-one-desktop
 
     - name: Pinocchio from robotpkg
       run: |
         curl http://robotpkg.openrobots.org/packages/debian/robotpkg.asc | tee /etc/apt/keyrings/robotpkg.asc
         echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/robotpkg.asc] http://robotpkg.openrobots.org/packages/debian/pub $(lsb_release -cs) robotpkg" | tee /etc/apt/sources.list.d/robotpkg.list
-        apt update
-        apt install robotpkg-312-coal robotpkg-312-pinocchio
+        apt-get update
+        apt-get install robotpkg-coal robotpkg-pinocchio
         export CMAKE_PREFIX_PATH=/opt/openrobots:${CMAKE_PREFIX_PATH}
         export LD_LIBRARY_PATH=/opt/openrobots/lib:${LD_LIBRARY_PATH}
 

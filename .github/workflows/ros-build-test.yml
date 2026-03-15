@@ -5,17 +5,13 @@ on:
     branches: [ ubuntu24-ci ]
   pull_request:
     branches: [ ros-one-devel ]
-  workflow_dispatch:
 
 jobs:
   build:
 
     strategy:
       fail-fast: false
-      matrix:
-        build_type: [ Release ]
 
-    # environment: regular Ubuntu with container
     runs-on: ubuntu-24.04
     container:
       image: ubuntu:24.04
@@ -39,7 +35,7 @@ jobs:
         curl -sSL https://ros.packages.techfak.net/gpg.key -o /etc/apt/keyrings/ros-one-keyring.gpg
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/ros-one-keyring.gpg] https://ros.packages.techfak.net $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros1.list
         apt-get update
-        apt-get install -y python3-rosdep
+        apt-get install -y python3-rosdep python3-catkin-tools
         rosdep init
         echo "yaml https://ros.packages.techfak.net/ros-one.yaml one" | tee /etc/ros/rosdep/sources.list.d/1-ros-one.list
         rosdep update
@@ -85,11 +81,13 @@ jobs:
     #     rsync -a tmp/microsoft/onnxruntime-linux-x64-1.7.0/lib/ /usr/local/lib
     #     rsync -a src/ocs2/ocs2_mpcnet/ocs2_mpcnet_core/misc/onnxruntime/cmake/ /usr/local/share/onnxruntime
 
-    - name: Build (${{ matrix.build_type }})
+    - name: Build Release
       shell: bash
       run: |
         source /opt/ros/one/setup.bash
-        catkin_make_isolated --use-ninja --merge --only-pkg-with-deps ocs2_legged_robot_ros ocs2_self_collision_visualization --cmake-args -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} 
+        catkin init
+        ctking config --cmake-args -DCMAKE_BUILD_TYPE=Release
+        catkin build ocs2_legged_robot_ros ocs2_self_collision_visualization  
         
     # - name: Test
     #   shell: bash

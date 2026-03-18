@@ -1,3 +1,5 @@
+[![Build and Test OCS2](https://github.com/idra-lab/ocs2/actions/workflows/ros-build-test.yml/badge.svg)](https://github.com/idra-lab/ocs2/actions/workflows/ros-build-test.yml)
+
 # OCS2 Toolbox
 
 OCS2 (**O**ptimal **C**ontrol for **S**witched **S**ystems) is a C++ toolbox for formulating and solving nonlinear optimal control problems, with an emphasis on real-time **Model Predictive Control (MPC)** for robotics.

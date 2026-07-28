@@ -34,6 +34,7 @@ find_package(Boost REQUIRED COMPONENTS system filesystem log_setup log)
 
 add_library(${PROJECT_NAME}
   src/gait/GaitKeyboardPublisher.cpp
+  src/gait/GaitJoypadPublisher.cpp
   src/gait/GaitReceiver.cpp
   src/visualization/LeggedRobotVisualizer.cpp
 )
@@ -108,6 +109,12 @@ add_executable(legged_robot_gait_command
 target_link_libraries(legged_robot_gait_command ${PROJECT_NAME})
 target_compile_options(legged_robot_gait_command PRIVATE ${OCS2_PINOCCHIO_FLAGS})
 
+add_executable(legged_robot_gait_joy_command
+  src/LeggedRobotGaitJoyCommandNode.cpp
+)
+target_link_libraries(legged_robot_gait_joy_command ${PROJECT_NAME})
+target_compile_options(legged_robot_gait_joy_command PRIVATE ${OCS2_PINOCCHIO_FLAGS})
+
 #############
 ## Install ##
 #############
@@ -125,6 +132,7 @@ install(TARGETS
   legged_robot_dummy
   legged_robot_target
   legged_robot_gait_command
+  legged_robot_gait_joy_command
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 install(DIRECTORY include/${PROJECT_NAME}/
